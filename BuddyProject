@@ -1,0 +1,175 @@
+class Person {
+
+  String username;
+  ILoBuddy buddies;
+
+  Person(String username) {
+    this.username = username;
+    this.buddies = new MTLoBuddy();
+  }
+
+  // returns true if this Person has that as a direct buddy
+  boolean hasDirectBuddy(Person that) {
+    return this.buddies.hasBuddy(that);
+  }
+
+  // returns the number of people who will show up at the party
+  // given by this person
+  int partyCount(){
+    return this.buddies.partyCount(1, new MTLoBuddy());
+  }
+
+  // returns the number of people that are direct buddies
+  // of both this and that person
+  int countCommonBuddies(Person that) {
+    return this.buddies.countBuddies(that, 0);
+  }
+
+  // will the given person be invited to a party
+  // organized by this person?
+  boolean hasExtendedBuddy(Person that) {
+    return this.buddies.hasExtendedBuddy(that);
+  }
+
+  void addBuddy(Person p){
+    this.buddies = new ConsLoBuddy(p, this.buddies);
+  }
+}
+
+
+
+class MTLoBuddy implements ILoBuddy {
+  MTLoBuddy() {}
+
+  public boolean hasBuddy(Person p) {
+    return false;
+  }
+  public int countBuddies(Person p, int val) {
+    return val;
+  }
+  public boolean hasExtendedBuddy(Person p) {
+    return false;
+  }
+  public int partyCount(int val, ILoBuddy ac) {
+    return val;
+  }
+}
+
+
+
+interface ILoBuddy {
+  boolean hasBuddy(Person p);
+  int countBuddies(Person p, int val);
+  boolean hasExtendedBuddy(Person p);
+  int partyCount(int val, ILoBuddy ac);
+}
+
+
+
+
+class ConsLoBuddy implements ILoBuddy {
+
+  Person first;
+  ILoBuddy rest;
+
+  ConsLoBuddy(Person first, ILoBuddy rest) {
+    this.first = first;
+    this.rest = rest;
+  }
+  public boolean hasBuddy(Person p) {
+    if(this.first.username.equals(p.username)){
+      return true;
+    }
+    else {return this.rest.hasBuddy(p);}
+  }
+  public int countBuddies(Person p, int val) {
+    if(p.hasDirectBuddy(this.first)){
+      return this.rest.countBuddies(p, val + 1);
+    }
+    else return this.rest.countBuddies(p, val);
+  }
+  public boolean hasExtendedBuddy(Person p) {
+    if(this.hasBuddy(p) || this.first.hasDirectBuddy(p)){
+      return true;
+    }
+    else return this.rest.hasExtendedBuddy(p);
+  }
+  public int partyCount(int val, ILoBuddy ac) {
+    if(ac.hasBuddy(this.first)){
+      return rest.partyCount(val, ac);
+    }
+    else{
+      return this.rest.partyCount(val + 1 + this.first.buddies.partyCount(val - 1, new ConsLoBuddy(this.first, ac)), new ConsLoBuddy(this.first, ac));
+    }
+  }
+}
+
+
+import tester.*;
+
+
+// runs tests for the buddies problem
+class ExamplesBuddies{
+    Person ann, bob, cole, dan, ed, fay, gabi, hank, jan, kim, len;
+    void iniconditions() {
+        this.ann = new Person("Ann");
+        this.bob = new Person("Bob");
+        this.cole = new Person("Cole");
+        this.dan = new Person("Dan");
+        this.ed = new Person("Ed");
+        this.fay = new Person("Fay");
+        this.gabi = new Person("Gabi");
+        this.hank = new Person("Hank");
+        this.jan = new Person("Jan");
+        this.kim = new Person("Kim");
+        this.len = new Person("Len");
+    }
+void updateBuddies(){
+        this.iniconditions();
+        this.ann.addBuddy(bob);
+        this.ann.addBuddy(cole);
+        this.bob.addBuddy(ann);
+        this.bob.addBuddy(ed);
+        this.bob.addBuddy(hank);
+        this.cole.addBuddy(dan);
+        this.dan.addBuddy(cole);
+        this.ed.addBuddy(fay);
+        this.fay.addBuddy(ed);
+        this.fay.addBuddy(gabi);
+        this.gabi.addBuddy(ed);
+        this.gabi.addBuddy(fay);
+        this.jan.addBuddy(kim);
+        this.jan.addBuddy(len);
+        this.kim.addBuddy(jan);
+        this.kim.addBuddy(len);
+        this.len.addBuddy(jan);
+        this.len.addBuddy(kim);
+}
+boolean testHadDirectBuddy(Tester t){
+        this.updateBuddies();
+        return
+          t.checkExpect(ann.hasDirectBuddy(bob), true) &&
+            t.checkExpect(ann.hasDirectBuddy(kim), false);
+}
+boolean testCountCommonBuddies(Tester t){
+      this.updateBuddies();
+      return
+        t.checkExpect(ann.countCommonBuddies(dan), 1) &&
+          t.checkExpect(kim.countCommonBuddies(len), 1) &&
+          t.checkExpect(ann.countCommonBuddies(kim), 0);
+}
+boolean testHasExtendedBuddy(Tester t){
+      this.updateBuddies();
+      return
+        t.checkExpect(ann.hasExtendedBuddy(hank), true) &&
+          t.checkExpect(ann.hasExtendedBuddy(ed), true) &&
+          t.checkExpect(ann.hasExtendedBuddy(bob), true)&&
+          t.checkExpect(ann.hasExtendedBuddy(kim), false);
+}
+boolean testPartyCount(Tester t){
+      this.updateBuddies();
+      return
+        t.checkExpect(ann.partyCount(), 13) &&
+          t.checkExpect(kim.partyCount(), 3);
+}
+}
